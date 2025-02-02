@@ -37,6 +37,54 @@ async function fetchQuotesFromServer() {
     }
 }
 
+// Post a new quote to the server
+async function postQuoteToServer(quote) {
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(quote)
+        });
+
+        if (response.ok) {
+            showNotification("Quote successfully posted to server!");
+        } else {
+            throw new Error("Failed to post quote");
+        }
+    } catch (error) {
+        console.error("Error posting quote to server:", error);
+    }
+}
+
+// Add a new quote
+function addQuote() {
+    const newQuoteText = document.getElementById("newQuoteText").value;
+    const newQuoteCategory = document.getElementById("newQuoteCategory").value;
+
+    if (newQuoteText.trim() === "" || newQuoteCategory.trim() === "") {
+        alert("Both fields are required!");
+        return;
+    }
+
+    const newQuote = {
+        text: newQuoteText,
+        category: newQuoteCategory,
+        timestamp: Date.now()
+    };
+
+    quotes.push(newQuote);
+    localStorage.setItem("quotes", JSON.stringify(quotes));
+
+    // Post to server
+    postQuoteToServer(newQuote);
+
+    // Update UI
+    populateCategories();
+    showRandomQuote();
+}
+
 // Sync quotes with server
 async function syncWithServer() {
     const serverQuotes = await fetchQuotesFromServer();
