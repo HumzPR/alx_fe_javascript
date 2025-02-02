@@ -18,8 +18,8 @@ function showNotification(message) {
     setTimeout(() => notification.remove(), 3000);
 }
 
-// Fetch quotes from server and sync with local data
-async function syncWithServer() {
+// Fetch quotes from server
+async function fetchQuotesFromServer() {
     try {
         const response = await fetch(API_URL);
         const serverQuotes = await response.json();
@@ -30,27 +30,33 @@ async function syncWithServer() {
             timestamp: Date.now()
         }));
 
-        // Merge quotes while avoiding duplicates
-        let mergedQuotes = [...quotes];
-
-        newQuotes.forEach(serverQuote => {
-            let exists = mergedQuotes.some(q => q.text === serverQuote.text);
-            if (!exists) {
-                mergedQuotes.push(serverQuote);
-            }
-        });
-
-        quotes = mergedQuotes;
-        localStorage.setItem("quotes", JSON.stringify(quotes));
-        localStorage.setItem("lastSyncTime", Date.now());
-
-        showNotification("Quotes synced with server!");
-        populateCategories();
-        showRandomQuote();
+        return newQuotes;
     } catch (error) {
-        console.error("Error syncing with server:", error);
-        showNotification("Failed to sync with server.");
+        console.error("Error fetching quotes from server:", error);
+        return [];
     }
+}
+
+// Sync quotes with server
+async function syncWithServer() {
+    const serverQuotes = await fetchQuotesFromServer();
+
+    let mergedQuotes = [...quotes];
+
+    serverQuotes.forEach(serverQuote => {
+        let exists = mergedQuotes.some(q => q.text === serverQuote.text);
+        if (!exists) {
+            mergedQuotes.push(serverQuote);
+        }
+    });
+
+    quotes = mergedQuotes;
+    localStorage.setItem("quotes", JSON.stringify(quotes));
+    localStorage.setItem("lastSyncTime", Date.now());
+
+    showNotification("Quotes synced with server!");
+    populateCategories();
+    showRandomQuote();
 }
 
 // Sync with server every 10 minutes
